@@ -18,11 +18,7 @@ func (app *application) routes() http.Handler {
 	mux.Post("/user/login", dynamicMiddleware.ThenFunc(loginUserHandler(app)))
 	mux.Post("/user/logout", dynamicMiddleware.ThenFunc(app.logoutUser))
 	mux.Post("/comment/add", dynamicMiddleware.ThenFunc(app.commentNews))
-	apiHandler, err := NewAPIHandler("ui/templates/api.page.tmpl")
-	if err != nil {
-		app.serverError(nil, err)
-	}
-	mux.Get("/api", dynamicMiddleware.ThenFunc(apiHandler.HandleAPI))
+
 	mux.Get("/news/:id", dynamicMiddleware.ThenFunc(app.showNews))
 	return standardMiddleware.Then(mux)
 }
