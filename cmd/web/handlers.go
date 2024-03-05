@@ -2,6 +2,7 @@ package main
 
 import (
 	"batyrnosquare/go-premiership/pkg/models"
+	"batyrnosquare/go-premiership/pkg/models/mongodb"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -147,40 +148,40 @@ func (app *application) commentNews(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/news?id=%d", newsId), http.StatusSeeOther)
 }
 
-//func (app *application) deleteComment(w http.ResponseWriter, r *http.Request) {
-//	userID := app.session.GetInt(r, "authenticatedUserID")
-//	user, err := app.users.Get(userID)
-//	commentID, err := strconv.Atoi(r.FormValue("commentID"))
-//	if err != nil || commentID < 1 {
-//		app.serverError(w, err)
-//		return
-//	}
-//	newsID, err := app.comments.GetNewsId(commentID)
-//	if err != nil {
-//		app.serverError(w, err)
-//		return
-//	}
-//	commUserID, err := app.comments.GetUserId(commentID)
-//	if err != nil {
-//		app.serverError(w, err)
-//		return
-//	}
-//	if user.Role != string(mongodb.Admin) && strconv.Itoa(userID) != commUserID {
-//		app.session.Put(r, "flash", "You can only delete your own comments!")
-//		http.Redirect(w, r, fmt.Sprintf("/news?id=%d", newsID), http.StatusSeeOther)
-//		return
-//	}
-//	err = app.comments.Delete(&models.Comment{ID: strconv.Itoa(commentID)})
-//	if err != nil {
-//		if errors.Is(err, models.ErrNoRecord) {
-//			app.notFound(w)
-//		} else {
-//			app.serverError(w, err)
-//		}
-//		return
-//	}
-//	http.Redirect(w, r, fmt.Sprintf("/news?id=%d", newsID), http.StatusSeeOther)
-//}
+func (app *application) deleteComment(w http.ResponseWriter, r *http.Request) {
+	userID := app.session.GetInt(r, "authenticatedUserID")
+	user, err := app.users.Get(r.Context(), userID)
+	commentID, err := strconv.Atoi(r.FormValue("commentID"))
+	if err != nil || commentID < 1 {
+		app.serverError(w, err)
+		return
+	}
+	newsID, err := app.comments.GetNewsId(commentID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	commUserID, err := app.comments.GetUserId(commentID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	if user.Role != string(mongodb.Admin) && strconv.Itoa(userID) != commUserID {
+		app.session.Put(r, "flash", "You can only delete your own comments!")
+		http.Redirect(w, r, fmt.Sprintf("/news?id=%d", newsID), http.StatusSeeOther)
+		return
+	}
+	err = app.comments.Delete(&models.Comment{ID: strconv.Itoa(commentID)})
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+	http.Redirect(w, r, fmt.Sprintf("/news?id=%d", newsID), http.StatusSeeOther)
+}
 
 func loginUserHandler(app *application) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
