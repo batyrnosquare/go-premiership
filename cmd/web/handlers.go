@@ -156,12 +156,12 @@ func (app *application) deleteComment(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	newsID, err := app.comments.GetNewsId(commentID)
+	newsID, err := app.comments.GetNewsId(&models.Comment{ID: strconv.Itoa(commentID)})
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	commUserID, err := app.comments.GetUserId(commentID)
+	commUserID, err := app.comments.GetUserId(&models.Comment{ID: strconv.Itoa(commentID)})
 	if err != nil {
 		app.serverError(w, err)
 		return
