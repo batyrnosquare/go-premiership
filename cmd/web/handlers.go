@@ -135,17 +135,22 @@ func (app *application) commentNews(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
-	userId := app.session.GetInt(r, "authenticatedUserID")
-	newsId, err := strconv.Atoi(r.FormValue("newsID"))
+	var comment models.Comment
+	err := json.NewDecoder(r.Body).Decode(&comment)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	userID := app.session.GetInt(r, "authenticatedUserID")
+	comment.UserID = strconv.Itoa(userID)
+	err = app.comments.Insert(&models.User{ID: comment.UserID}, &models.News{ID: comment.NewsID}, comment.Text)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
-	text := r.FormValue("text")
-	err = app.comments.Insert(&models.User{ID: strconv.Itoa(userId)}, &models.News{ID: strconv.Itoa(newsId)}, text)
-	if err != nil {
-		app.serverError(w, err)
-	}
-	http.Redirect(w, r, fmt.Sprintf("/news?id=%d", newsId), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/news?id=%d", comment.NewsID), http.StatusSeeOther)
 }
 
 func (app *application) deleteComment(w http.ResponseWriter, r *http.Request) {
